@@ -1,0 +1,5 @@
+fastapi==0.103.1
+uvicorn
+python-multipart
+tensorflow
+pillow
