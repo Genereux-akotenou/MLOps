@@ -2,6 +2,7 @@ version: '3.8'
 
 services:
   backend:
+    container_name: ml-stack2-backend
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -10,14 +11,15 @@ services:
     depends_on:
       - db
 
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    ports:
-      - "8501:8080"
-    depends_on:
-      - backend
+  #frontend:
+  #  container_name: ml-stack2-frontend
+  #  build:
+  #    context: ./frontend
+  #    dockerfile: Dockerfile
+  #  ports:
+  #    - "8501:8080"
+  #  depends_on:
+  #    - backend
 
   db:
     image: postgres:13
@@ -26,4 +28,4 @@ services:
       POSTGRES_PASSWORD: example
       POSTGRES_DB: example_db
     ports:
-      - "5432:5432"
+      - "5434:5432"
