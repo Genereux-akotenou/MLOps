@@ -1,9 +1,9 @@
-1. Run docker
+1. Build network for apps interc communication
 ```bash
-docker compose up -d
+docker network create ml-stack2-network --driver bridge
 ```
 
-2. ....
+2. Run docker
 ```bash
-
+docker compose up -d
 ```

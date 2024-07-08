@@ -8,7 +8,6 @@ RUN apt-get update && apt-get install -y \
 LABEL maintainer="Généreux Akotenou <genereux.akotenou@gmail.com>"
 WORKDIR /app
 COPY requirements.txt .
-RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 COPY . .
 
