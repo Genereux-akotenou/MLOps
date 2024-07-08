@@ -33,6 +33,7 @@ jobs:
         with:
           context: week2/2-labs/02-Action-In-Action/backend
           push: true
+          platforms: linux/amd64,linux/arm64
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/catdog-api:latest
 
       - name: Build and push frontend image
@@ -41,4 +42,5 @@ jobs:
         with:
           context: week2/2-labs/02-Action-In-Action/frontend
           push: true
+          platforms: linux/amd64,linux/arm64
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/catdog-frontend:latest
