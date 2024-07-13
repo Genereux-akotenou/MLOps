@@ -11,7 +11,7 @@ from skl2onnx.common.data_types import FloatTensorType
 # ------------------------------------------------------- 
 # General setting
 # ------------------------------------------------------- 
-st.set_page_config(page_title='The Machine Learning App', layout='wide')
+st.set_page_config(page_title='Iris ML App', layout='wide')
 
 # ------------------------------------------------------- 
 # Sidebar
