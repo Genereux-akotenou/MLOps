@@ -5,7 +5,6 @@ RUN apt-get update && apt-get install -y \
     libhdf5-dev \
     gcc
 
-LABEL maintainer="Généreux Akotenou <genereux.akotenou@gmail.com>"
 WORKDIR /app
 COPY requirements.txt .
 RUN pip install -r requirements.txt
