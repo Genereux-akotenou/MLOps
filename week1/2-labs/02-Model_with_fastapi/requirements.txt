@@ -4,3 +4,4 @@ python-multipart
 tensorflow
 pillow
 streamlit
+joblib
