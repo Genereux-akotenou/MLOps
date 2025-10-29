@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MLOps Beginner Flashcards</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f7f9;
+    color: #333;
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+h1 {
+    color: #0077b6;
+    margin-bottom: 40px;
+}
+
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+    width: 90%;
+    max-width: 1400px;
+}
+
+/* Card Container and Flip Animation Setup */
+.card {
+    background-color: transparent;
+    perspective: 1000px; /* For 3D effect */
+    height: 250px;
+    cursor: pointer;
+}
+
+.card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    transition: transform 0.6s;
+    transform-style: preserve-3d;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+}
+
+/* The magic flip on click */
+.card.flipped .card-inner {
+    transform: rotateY(180deg);
+}
+
+.card-front, .card-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    border-radius: 12px;
+    padding: 20px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.card-front {
+    background-color: #ffffff;
+    color: #0077b6;
+    border: 3px solid #0077b6;
+}
+
+.card-back {
+    background-color: #0077b6;
+    color: white;
+    transform: rotateY(180deg);
+    border: 3px solid #0077b6;
+    text-align: left;
+    align-items: flex-start;
+}
+
+/* Content Styling */
+.illustration {
+    font-size: 3em;
+    margin: 0 0 10px 0;
+}
+
+h2 {
+    font-size: 1.2em;
+    margin-bottom: 5px;
+}
+
+h3 {
+    font-size: 1.3em;
+    margin-top: 0;
+    border-bottom: 2px solid white;
+    padding-bottom: 5px;
+    margin-bottom: 10px;
+}
+
+.click-text {
+    font-size: 0.9em;
+    color: #666;
+    font-style: italic;
+    margin-top: 10px;
+}
+
+.card-back p {
+    font-size: 1em;
+    line-height: 1.4;
+    font-weight: 300;
+}
+
+/* Bold the key concepts in the back */
+.card-back p strong {
+    font-weight: bold;
+    color: #ffc300; /* A bright highlight color */
+}
+    </style>
+
+</head>
+<body>
+
+    <h1>MLOps Beginner Curriculum Cards</h1>
+
+    <div class="card-grid">
+        <div class="card" onclick="this.classList.toggle('flipped')">
+            <div class="card-inner">
+                <div class="card-front">
+                    <p class="illustration">❌🐍</p>
+                    <h2>M1.1: ML in a Notebook</h2>
+                    <p class="click-text">Click to reveal Key Message</p>
+                </div>
+                <div class="card-back">
+                    <h3>Key Message (The Pain)</h3>
+                    <p>A successful notebook model is NOT a reliable system. Focus on reproducibility, scaling, and maintenance.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card" onclick="this.classList.toggle('flipped')">
+            <div class="card-inner">
+                <div class="card-front">
+                    <p class="illustration">🧬🤖</p>
+                    <h2>M1.2: MLOps Defined</h2>
+                    <p class="click-text">Click to reveal Key Message</p>
+                </div>
+                <div class="card-back">
+                    <h3>Key Message (The Solution)</h3>
+                    <p>Practices combining ML, DevOps, and Data Engineering. Goal: Reliable, automated, and continuous delivery of ML systems.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" onclick="this.classList.toggle('flipped')">
+            <div class="card-inner">
+                <div class="card-front">
+                    <p class="illustration">⚖️📊</p>
+                    <h2>M1.3: MLOps vs. DevOps</h2>
+                    <p class="click-text">Click to reveal Key Message</p>
+                </div>
+                <div class="card-back">
+                    <h3>Key Message (The Difference)</h3>
+                    <p>MLOps includes unique complexities: data/model versioning, monitoring for data drift, and experiment tracking.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" onclick="this.classList.toggle('flipped')">
+            <div class="card-inner">
+                <div class="card-front">
+                    <p class="illustration">🔁🔄</p>
+                    <h2>M1.4: ML Lifecycle Core</h2>
+                    <p class="click-text">Click to reveal Key Message</p>
+                </div>
+                <div class="card-back">
+                    <h3>Key Message (The Map)</h3>
+                    <p>Beyond training, MLOps focuses on Deployment → Monitoring → Retraining to close the continuous loop.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" onclick="this.classList.toggle('flipped')">
+            <div class="card-inner">
+                <div class="card-front">
+                    <p class="illustration">📂📜</p>
+                    <h2>M2.1: Version Control</h2>
+                    <p class="click-text">Click to reveal Key Concepts</p>
+                </div>
+                <div class="card-back">
+                    <h3>Key Concepts</h3>
+                    <p>Standard Git + versioning large Data and Model files (DVC/Git LFS). Action: Use Git/GitHub to version code and track data.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" onclick="this.classList.toggle('flipped')">
+            <div class="card-inner">
+                <div class="card-front">
+                    <p class="illustration">📦🌐</p>
+                    <h2>M2.2: Environment Isolation</h2>
+                    <p class="click-text">Click to reveal Key Concepts</p>
+                </div>
+                <div class="card-back">
+                    <h3>Key Concepts</h3>
+                    <p>Solve the "it works on my machine" problem using virtual environments to manage dependencies. Action: Use venv/conda from `requirements.txt`.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" onclick="this.classList.toggle('flipped')">
+            <div class="card-inner">
+                <div class="card-front">
+                    <p class="illustration">🐳🏗️</p>
+                    <h2>M2.3: Containerization</h2>
+                    <p class="click-text">Click to reveal Key Concepts</p>
+                </div>
+                <div class="card-back">
+                    <h3>Key Concepts</h3>
+                    <p>Docker provides a consistent, portable package (Image) for the app, code, and environment. Action: Write a simple Dockerfile.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" onclick="this.classList.toggle('flipped')">
+            <div class="card-inner">
+                <div class="card-front">
+                    <p class="illustration">🧪📈</p>
+                    <h2>M3.1: Experiment Tracking</h2>
+                    <p class="click-text">Click to reveal Key Concepts</p>
+                </div>
+                <div class="card-back">
+                    <h3>Key Concepts</h3>
+                    <p>Record metrics, parameters, and artifacts to compare multiple training runs and ensure transparency. Action: Use MLflow/WandB.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" onclick="this.classList.toggle('flipped')">
+            <div class="card-inner">
+                <div class="card-front">
+                    <p class="illustration">🏛️🔖</p>
+                    <h2>M3.2: Model Registry</h2>
+                    <p class="click-text">Click to reveal Key Concepts</p>
+                </div>
+                <div class="card-back">
+                    <h3>Key Concepts</h3>
+                    <p>Centralized system for model governance. Manages the lifecycle: Staging → Production → Archive. Action: Register the best model.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" onclick="this.classList.toggle('flipped')">
+            <div class="card-inner">
+                <div class="card-front">
+                    <p class="illustration">🎁💻</p>
+                    <h2>M3.3: Packaging for Serving</h2>
+                    <p class="click-text">Click to reveal Key Concepts</p>
+                </div>
+                <div class="card-back">
+                    <h3>Key Concepts</h3>
+                    <p>Preparing the model artifact (e.g., `.pkl` file) and the logic required to run predictions. Action: Write a Python wrapper function.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" onclick="this.classList.toggle('flipped')">
+            <div class="card-inner">
+                <div class="card-front">
+                    <p class="illustration">📞🔌</p>
+                    <h2>M4.1: Model Serving APIs</h2>
+                    <p class="click-text">Click to reveal Key Concepts</p>
+                </div>
+                <div class="card-back">
+                    <h3>Key Concepts</h3>
+                    <p>Exposing the model via a network endpoint (API) to receive requests and send back predictions (JSON payloads). Action: Use FastAPI or Flask.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" onclick="this.classList.toggle('flipped')">
+            <div class="card-inner">
+                <div class="card-front">
+                    <p class="illustration">🚀⏱️</p>
+                    <h2>M4.2: Deployment Patterns</h2>
+                    <p class="click-text">Click to reveal Key Concepts</p>
+                </div>
+                <div class="card-back">
+                    <h3>Key Concepts</h3>
+                    <p>Differentiate between Online (real-time) and Batch predictions. Deploy the model via its container. Action: Run the API container locally.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" onclick="this.classList.toggle('flipped')">
+            <div class="card-inner">
+                <div class="card-front">
+                    <p class="illustration">⚙️⛓️</p>
+                    <h2>M4.3: CI/CD for ML</h2>
+                    <p class="click-text">Click to reveal Key Concepts</p>
+                </div>
+                <div class="card-back">
+                    <h3>Key Concepts</h3>
+                    <p>Automating the process: CI for code testing and CD for model serving/retraining. Action: Outline a pipeline using GitHub Actions.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" onclick="this.classList.toggle('flipped')">
+            <div class="card-inner">
+                <div class="card-front">
+                    <p class="illustration">🚨📉</p>
+                    <h2>M5.1: Need for Monitoring</h2>
+                    <p class="click-text">Click to reveal Key Concepts</p>
+                </div>
+                <div class="card-back">
+                    <h3>Key Concepts</h3>
+                    <p>Model can be technically correct but deliver wrong business outcomes over time. Necessary for continuous learning and reliability.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" onclick="this.classList.toggle('flipped')">
+            <div class="card-inner">
+                <div class="card-front">
+                    <p class="illustration">✅💻</p>
+                    <h2>M5.2: Key Prod Metrics</h2>
+                    <p class="click-text">Click to reveal Key Concepts</p>
+                </div>
+                <div class="card-back">
+                    <h3>Key Concepts</h3>
+                    <p>Track Data Quality, Model Performance (latency, error rate), and Business Metrics. Action: Implement simple logging of all inference requests.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" onclick="this.classList.toggle('flipped')">
+            <div class="card-inner">
+                <div class="card-front">
+                    <p class="illustration">🌊⚠️</p>
+                    <h2>M5.3: Drift Detection</h2>
+                    <p class="click-text">Click to reveal Key Concepts</p>
+                </div>
+                <div class="card-back">
+                    <h3>Key Concepts</h3>
+                    <p>Concept Drift (target relationship changes) vs. Data Drift (input features change). Key cause of model decay. Action: Use a library like Evidently.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
