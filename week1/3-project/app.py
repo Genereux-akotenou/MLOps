@@ -12,7 +12,7 @@ import io
 # Configuration de la page
 st.set_page_config(
     page_title="Prédicteur de Churn Client",
-    page_icon="📊",
+    page_icon="",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -70,7 +70,7 @@ class ChurnPredictorApp:
             self.label_encoders = model_data['label_encoders']
             self.feature_names = model_data['feature_names']
         except FileNotFoundError:
-            st.error("❌ Modèle non trouvé. Veuillez vous assurer que 'churn_predictor_model.joblib' est dans le même répertoire.")
+            st.error(" Modèle non trouvé. Veuillez vous assurer que 'churn_predictor_model.joblib' est dans le même répertoire.")
             st.stop()
     
     def preprocess_customer_data(self, customer_data):
@@ -130,18 +130,18 @@ def main():
     predictor_app = ChurnPredictorApp()
     
     # En-tête principale
-    st.markdown('<h1 class="main-header">🔮 Prédicteur de Churn Client</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 class="main-header"> Prédicteur de Churn Client</h1>', unsafe_allow_html=True)
     
     # Sidebar pour la navigation
     st.sidebar.title("Navigation")
     app_mode = st.sidebar.selectbox(
         "Choisissez le mode",
-        ["🏠 Prédiction Unique", "📊 Analyse par Lot", "ℹ️ Aide & Documentation"]
+        [" Prédiction Unique", " Analyse par Lot", " Aide & Documentation"]
     )
     
-    if app_mode == "🏠 Prédiction Unique":
+    if app_mode == " Prédiction Unique":
         show_single_prediction(predictor_app)
-    elif app_mode == "📊 Analyse par Lot":
+    elif app_mode == " Analyse par Lot":
         show_batch_analysis(predictor_app)
     else:
         show_documentation()
@@ -149,7 +149,7 @@ def main():
 def show_single_prediction(predictor_app):
     """Interface pour la prédiction unique"""
     
-    st.header("📋 Saisie des Informations Client")
+    st.header(" Saisie des Informations Client")
     
     # Layout en colonnes
     col1, col2 = st.columns(2)
@@ -188,7 +188,7 @@ def show_single_prediction(predictor_app):
         total_charges = st.slider("Charges Totales ($)", 0.0, 10000.0, 1000.0)
     
     # Bouton de prédiction
-    if st.button("🔮 Prédire le Risque de Churn", type="primary", use_container_width=True):
+    if st.button(" Prédire le Risque de Churn", type="primary", use_container_width=True):
         # Préparer les données
         customer_data = {
             'gender': gender,
@@ -226,7 +226,7 @@ def display_prediction_result(result, customer_data):
     risk_color = predictor_app.get_risk_color(risk_level)
     
     st.markdown("---")
-    st.header("🎯 Résultats de la Prédiction")
+    st.header(" Résultats de la Prédiction")
     
     # Métriques principales
     col1, col2, col3 = st.columns(3)
@@ -246,7 +246,7 @@ def display_prediction_result(result, customer_data):
         )
     
     with col3:
-        prediction_text = "⚠️ Client à Risque" if result['prediction'] == 1 else "✅ Client Fidèle"
+        prediction_text = " Client à Risque" if result['prediction'] == 1 else " Client Fidèle"
         st.metric(
             label="Recommandation",
             value=prediction_text
@@ -279,35 +279,35 @@ def display_prediction_result(result, customer_data):
     st.plotly_chart(fig, use_container_width=True)
     
     # Recommandations selon le niveau de risque
-    st.subheader("💡 Recommandations")
+    st.subheader(" Recommandations")
     
     if risk_level == "Élevé":
         st.error("""
         **Actions Immédiates Recommandées:**
-        - 📞 Contact proactif dans les 24h
-        - 💰 Offre de fidélisation personnalisée
-        - 🔍 Analyse des raisons de mécontentement
-        - 🎁 Proposition d'avantages immédiats
+        -  Contact proactif dans les 24h
+        -  Offre de fidélisation personnalisée
+        -  Analyse des raisons de mécontentement
+        -  Proposition d'avantages immédiats
         """)
     elif risk_level == "Modéré":
         st.warning("""
         **Actions Préventives:**
-        - 📧 Email de vérification de satisfaction
-        - 🔄 Revue du plan de service
-        - 📊 Surveillance accrue
-        - 🏆 Programme de fidélité
+        -  Email de vérification de satisfaction
+        -  Revue du plan de service
+        -  Surveillance accrue
+        -  Programme de fidélité
         """)
     else:
         st.success("""
         **Actions de Fidélisation:**
-        - ✅ Maintenance de la satisfaction
-        - 🎯 Offres de services additionnels
-        - ⭐ Programme de recommandation
-        - 📈 Suivi régulier
+        -  Maintenance de la satisfaction
+        -  Offres de services additionnels
+        -  Programme de recommandation
+        -  Suivi régulier
         """)
     
     # Analyse détaillée
-    with st.expander("📊 Analyse Détaillée du Profil"):
+    with st.expander(" Analyse Détaillée du Profil"):
         show_detailed_analysis(customer_data, probability)
 
 def show_detailed_analysis(customer_data, probability):
@@ -355,7 +355,7 @@ def show_detailed_analysis(customer_data, probability):
 def show_batch_analysis(predictor_app):
     """Interface pour l'analyse par lot"""
     
-    st.header("📊 Analyse de Churn par Lot")
+    st.header(" Analyse de Churn par Lot")
     
     uploaded_file = st.file_uploader(
         "Téléchargez un fichier CSV avec les données clients",
@@ -367,14 +367,14 @@ def show_batch_analysis(predictor_app):
         try:
             # Charger les données
             df = pd.read_csv(uploaded_file)
-            st.success(f"✅ Fichier chargé avec succès: {len(df)} clients")
+            st.success(f" Fichier chargé avec succès: {len(df)} clients")
             
             # Aperçu des données
-            with st.expander("👀 Aperçu des Données"):
+            with st.expander(" Aperçu des Données"):
                 st.dataframe(df.head())
             
             # Prédictions par lot
-            if st.button("🎯 Lancer l'Analyse de Churn", type="primary"):
+            if st.button(" Lancer l'Analyse de Churn", type="primary"):
                 with st.spinner("Analyse en cours..."):
                     results = batch_predict(predictor_app, df)
                     display_batch_results(results, df)
@@ -408,7 +408,7 @@ def batch_predict(predictor_app, df):
 def display_batch_results(results_df, original_df):
     """Afficher les résultats par lot"""
     
-    st.header("📈 Résultats de l'Analyse par Lot")
+    st.header(" Résultats de l'Analyse par Lot")
     
     # Métriques globales
     col1, col2, col3, col4 = st.columns(4)
@@ -461,7 +461,7 @@ def display_batch_results(results_df, original_df):
         st.plotly_chart(fig, use_container_width=True)
     
     # Tableau des résultats
-    st.subheader("📋 Détail des Prédictions")
+    st.subheader(" Détail des Prédictions")
     results_display = results_df.copy()
     results_display['churn_probability'] = results_display['churn_probability'].apply(lambda x: f"{x:.1%}")
     
@@ -470,7 +470,7 @@ def display_batch_results(results_df, original_df):
     # Téléchargement des résultats
     csv = results_df.to_csv(index=False)
     st.download_button(
-        label="📥 Télécharger les Résultats (CSV)",
+        label=" Télécharger les Résultats (CSV)",
         data=csv,
         file_name="predictions_churn.csv",
         mime="text/csv"
@@ -479,15 +479,15 @@ def display_batch_results(results_df, original_df):
 def show_documentation():
     """Afficher la documentation"""
     
-    st.header("📚 Documentation et Aide")
+    st.header(" Documentation et Aide")
     
     st.markdown("""
-    ## 🔍 À Propos de cette Application
+    ##  À Propos de cette Application
     
     Cette application utilise un modèle de Machine Learning (Random Forest) pour prédire 
     la probabilité qu'un client quitte votre entreprise (churn).
     
-    ## 🎯 Comment Utiliser
+    ##  Comment Utiliser
     
     ### Prédiction Unique
     1. Remplissez toutes les informations du client dans le formulaire
@@ -499,7 +499,7 @@ def show_documentation():
     2. Téléchargez le fichier dans l'onglet "Analyse par Lot"
     3. Lancez l'analyse et téléchargez les résultats
     
-    ## 📊 Interprétation des Résultats
+    ##  Interprétation des Résultats
     
     - **Risque Faible** (< 40%) : Client fidèle, actions de fidélisation standard
     - **Risque Modéré** (40-70%) : Surveillance nécessaire, actions préventives
@@ -514,7 +514,7 @@ def show_documentation():
     - Méthode de paiement
     - Historique des charges
     
-    ## 📞 Support
+    ##  Support
     
     Pour toute question ou problème technique, contactez l'équipe data science.
     """)
