@@ -1,204 +1,311 @@
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split, cross_val_score, GridSearchCV
-from sklearn.linear_model import LogisticRegression
-from sklearn.preprocessing import StandardScaler, LabelEncoder
-from sklearn.metrics import classification_report, confusion_matrix, roc_auc_score, roc_curve
-from sklearn.impute import SimpleImputer
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.metrics import classification_report, confusion_matrix, roc_auc_score, precision_recall_curve
 import matplotlib.pyplot as plt
 import seaborn as sns
-
 import joblib
 
-# Chargement des données
-df = pd.read_csv('churn_predictor.csv')
-
-# Analyse initiale
-print("Dimensions du dataset:", df.shape)
-print("\nVariables et types:")
-print(df.dtypes)
-print("\nValeurs manquantes:")
-print(df.isnull().sum())
-
-# Conversion de TotalCharges en numérique (gestion des valeurs vides)
-df['TotalCharges'] = pd.to_numeric(df['TotalCharges'], errors='coerce')
-
-# Gestion des valeurs manquantes
-df['TotalCharges'].fillna(df['MonthlyCharges'], inplace=True)
-
-# Encodage des variables catégorielles
-categorical_columns = ['gender', 'Partner', 'Dependents', 'PhoneService', 'MultipleLines', 
-                      'InternetService', 'OnlineSecurity', 'OnlineBackup', 'DeviceProtection',
-                      'TechSupport', 'StreamingTV', 'StreamingMovies', 'Contract',
-                      'PaperlessBilling', 'PaymentMethod', 'Churn']
-
-label_encoders = {}
-for col in categorical_columns:
-    le = LabelEncoder()
-    df[col] = le.fit_transform(df[col].astype(str))
-    label_encoders[col] = le
-
-# Séparation des features et target
-X = df.drop(['customerID', 'Churn'], axis=1)
-y = df['Churn']
-
-# Vérification de l'équilibre des classes
-print("Distribution du churn:")
-print(y.value_counts())
-print("Proportion:", y.value_counts(normalize=True))
-
-# Création de nouvelles features
-X['TenureGroup'] = pd.cut(X['tenure'], bins=[0, 12, 24, 48, np.inf], labels=[0, 1, 2, 3])
-X['ChargeRatio'] = X['TotalCharges'] / (X['tenure'] + 1)  # +1 pour éviter division par 0
-X['MonthlyToTotalRatio'] = X['MonthlyCharges'] / (X['TotalCharges'] + 1)
-
-# Gestion des valeurs infinies
-X.replace([np.inf, -np.inf], np.nan, inplace=True)
-X.fillna(0, inplace=True)
-
-# Suppression de la colonne tenure originale pour éviter la redondance
-X.drop('tenure', axis=1, inplace=True)
-
-# Division train-test
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2, random_state=42, stratify=y
-)
-
-# Scaling des features
-scaler = StandardScaler()
-X_train_scaled = scaler.fit_transform(X_train)
-X_test_scaled = scaler.transform(X_test)
-
-# Modèle avec régularisation et gestion de classe déséquilibrée
-logistic_model = LogisticRegression(
-    penalty='l2',           # Régularisation L2 pour éviter l'overfitting
-    C=0.1,                 # Force de régularisation
-    class_weight='balanced', # Gestion du déséquilibre des classes
-    random_state=42,
-    max_iter=1000,
-    solver='liblinear'
-)
-
-# Entraînement du modèle
-logistic_model.fit(X_train_scaled, y_train)
-
-# Prédictions
-y_pred = logistic_model.predict(X_test_scaled)
-y_pred_proba = logistic_model.predict_proba(X_test_scaled)[:, 1]
-
-# Grid Search pour optimiser les hyperparamètres
-param_grid = {
-    'C': [0.001, 0.01, 0.1, 1, 10, 100],
-    'class_weight': ['balanced', {0: 1, 1: 2}, {0: 1, 1: 3}],
-    'penalty': ['l1', 'l2']
-}
-
-grid_search = GridSearchCV(
-    LogisticRegression(random_state=42, max_iter=1000, solver='liblinear'),
-    param_grid,
-    cv=5,
-    scoring='roc_auc',
-    n_jobs=-1
-)
-
-grid_search.fit(X_train_scaled, y_train)
-
-# Meilleur modèle
-best_logistic_model = grid_search.best_estimator_
-print("Meilleurs paramètres:", grid_search.best_params_)
-
-def evaluate_model(model, X_test, y_test):
-    y_pred = model.predict(X_test)
-    y_pred_proba = model.predict_proba(X_test)[:, 1]
+class ChurnPredictor:
+    def __init__(self):
+        self.model = RandomForestClassifier(
+            n_estimators=200,
+            max_depth=15,
+            min_samples_split=10,
+            min_samples_leaf=5,
+            max_features='sqrt',
+            random_state=42,
+            class_weight='balanced'
+        )
+        self.scaler = StandardScaler()
+        self.label_encoders = {}
+        self.feature_names = None
+        
+    def load_and_preprocess_data(self, file_path):
+        """Charger et prétraiter les données"""
+        print("Chargement des données...")
+        df = pd.read_csv(file_path)
+        
+        # Exploration initiale
+        print(f"Shape du dataset: {df.shape}")
+        print(f"Taux de churn: {df['Churn'].value_counts(normalize=True)['Yes']:.2%}")
+        
+        # Nettoyage des données
+        df_clean = df.copy()
+        
+        # Gérer TotalCharges
+        df_clean['TotalCharges'] = pd.to_numeric(df_clean['TotalCharges'], errors='coerce')
+        df_clean['TotalCharges'].fillna(0, inplace=True)
+        
+        # Target encoding
+        df_clean['Churn'] = df_clean['Churn'].map({'Yes': 1, 'No': 0})
+        
+        # Supprimer customerID
+        df_clean = df_clean.drop('customerID', axis=1)
+        
+        return df_clean
     
-    print("=== MATRICE DE CONFUSION ===")
-    cm = confusion_matrix(y_test, y_pred)
-    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
-    plt.title('Matrice de Confusion')
-    plt.show()
+    def feature_engineering(self, df):
+        """Ingénierie des caractéristiques"""
+        df_fe = df.copy()
+        
+        # Créer de nouvelles features
+        df_fe['TenureGroup'] = pd.cut(df_fe['tenure'], 
+                                    bins=[0, 12, 24, 36, 48, 60, 72],
+                                    labels=['0-1', '1-2', '2-3', '3-4', '4-5', '5-6'])
+        
+        df_fe['ChargeToTenureRatio'] = df_fe['MonthlyCharges'] / (df_fe['tenure'] + 1)
+        df_fe['TotalMonthlyRatio'] = df_fe['TotalCharges'] / (df_fe['MonthlyCharges'] + 1)
+        
+        # Gérer les valeurs infinies
+        df_fe.replace([np.inf, -np.inf], 0, inplace=True)
+        
+        return df_fe
     
-    print("\n=== RAPPORT DE CLASSIFICATION ===")
-    print(classification_report(y_test, y_pred))
+    def encode_features(self, df):
+        """Encoder les variables catégorielles"""
+        df_encoded = df.copy()
+        categorical_cols = df_encoded.select_dtypes(include=['object', 'category']).columns
+        
+        for col in categorical_cols:
+            if col not in self.label_encoders:
+                self.label_encoders[col] = LabelEncoder()
+            df_encoded[col] = self.label_encoders[col].fit_transform(df_encoded[col].astype(str))
+        
+        return df_encoded
     
-    print("\n=== SCORES ===")
-    auc_score = roc_auc_score(y_test, y_pred_proba)
-    print(f"AUC-ROC: {auc_score:.4f}")
+    def prepare_features(self, df):
+        """Préparer les features pour l'entraînement"""
+        # Feature engineering
+        df_processed = self.feature_engineering(df)
+        
+        # Encoding
+        df_encoded = self.encode_features(df_processed)
+        
+        # Séparer features et target
+        X = df_encoded.drop('Churn', axis=1)
+        y = df_encoded['Churn']
+        
+        self.feature_names = X.columns.tolist()
+        
+        return X, y
     
-    # Courbe ROC
-    fpr, tpr, thresholds = roc_curve(y_test, y_pred_proba)
-    plt.figure(figsize=(8, 6))
-    plt.plot(fpr, tpr, label=f'Logistic Regression (AUC = {auc_score:.4f})')
-    plt.plot([0, 1], [0, 1], 'k--')
-    plt.xlabel('False Positive Rate')
-    plt.ylabel('True Positive Rate')
-    plt.title('Courbe ROC')
-    plt.legend()
-    plt.show()
+    def train(self, file_path, test_size=0.2):
+        """Entraîner le modèle complet"""
+        # Charger et prétraiter les données
+        df = self.load_and_preprocess_data(file_path)
+        
+        # Préparer les features
+        X, y = self.prepare_features(df)
+        
+        # Split train/test
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=test_size, random_state=42, stratify=y
+        )
+        
+        # Standardiser les features numériques
+        numerical_cols = X.select_dtypes(include=[np.number]).columns
+        X_train[numerical_cols] = self.scaler.fit_transform(X_train[numerical_cols])
+        X_test[numerical_cols] = self.scaler.transform(X_test[numerical_cols])
+        
+        print("Entraînement du modèle Random Forest...")
+        # Entraîner le modèle
+        self.model.fit(X_train, y_train)
+        
+        # Évaluation
+        train_score = self.model.score(X_train, y_train)
+        test_score = self.model.score(X_test, y_test)
+        
+        print(f"Score entraînement: {train_score:.4f}")
+        print(f"Score test: {test_score:.4f}")
+        
+        # Prédictions
+        y_pred = self.model.predict(X_test)
+        y_pred_proba = self.model.predict_proba(X_test)[:, 1]
+        
+        # Métriques détaillées
+        self.evaluate_model(y_test, y_pred, y_pred_proba)
+        
+        # Feature importance
+        self.plot_feature_importance()
+        
+        return X_test, y_test, y_pred_proba
     
-    return auc_score
-
-# Évaluation du modèle optimisé
-auc_score = evaluate_model(best_logistic_model, X_test_scaled, y_test)
-
-# Validation croisée pour robustesse
-cv_scores = cross_val_score(
-    best_logistic_model, X_train_scaled, y_train, 
-    cv=5, scoring='roc_auc', n_jobs=-1
-)
-
-print("=== VALIDATION CROISÉE ===")
-print(f"Scores AUC par fold: {cv_scores}")
-print(f"AUC moyenne: {cv_scores.mean():.4f} (+/- {cv_scores.std() * 2:.4f})")
-
-# Importance des features
-feature_importance = pd.DataFrame({
-    'feature': X.columns,
-    'importance': abs(best_logistic_model.coef_[0])
-}).sort_values('importance', ascending=False)
-
-print("=== IMPORTANCE DES FEATURES ===")
-print(feature_importance.head(10))
-
-plt.figure(figsize=(10, 6))
-sns.barplot(data=feature_importance.head(10), x='importance', y='feature')
-plt.title('Top 10 des Features les plus Importantes')
-plt.show()
-
-def predict_churn(customer_data, model, scaler, label_encoders):
-    """
-    Prédit le churn pour de nouvelles données client
-    """
-    # Prétraitement des nouvelles données
-    customer_processed = preprocess_new_data(customer_data, label_encoders)
+    def evaluate_model(self, y_true, y_pred, y_pred_proba):
+        """Évaluation complète du modèle"""
+        print("\n" + "="*50)
+        print("ÉVALUATION DU MODÈLE")
+        print("="*50)
+        
+        # Métriques de base
+        auc_score = roc_auc_score(y_true, y_pred_proba)
+        print(f"AUC Score: {auc_score:.4f}")
+        
+        # Rapport de classification
+        print("\nRapport de Classification:")
+        print(classification_report(y_true, y_pred, target_names=['Non-Churn', 'Churn']))
+        
+        # Matrice de confusion
+        plt.figure(figsize=(10, 4))
+        
+        plt.subplot(1, 2, 1)
+        cm = confusion_matrix(y_true, y_pred)
+        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', 
+                   xticklabels=['Non-Churn', 'Churn'],
+                   yticklabels=['Non-Churn', 'Churn'])
+        plt.title('Matrice de Confusion')
+        plt.ylabel('Vérité terrain')
+        plt.xlabel('Prédictions')
+        
+        # Courbe ROC
+        plt.subplot(1, 2, 2)
+        from sklearn.metrics import roc_curve
+        fpr, tpr, _ = roc_curve(y_true, y_pred_proba)
+        plt.plot(fpr, tpr, label=f'Random Forest (AUC = {auc_score:.3f})', linewidth=2)
+        plt.plot([0, 1], [0, 1], 'k--', alpha=0.5, label='Aléatoire')
+        plt.xlabel('Taux Faux Positifs')
+        plt.ylabel('Taux Vrais Positifs')
+        plt.title('Courbe ROC')
+        plt.legend()
+        plt.grid(True, alpha=0.3)
+        
+        plt.tight_layout()
+        plt.show()
+        
+        # Courbe Precision-Recall
+        precision, recall, _ = precision_recall_curve(y_true, y_pred_proba)
+        plt.figure(figsize=(8, 6))
+        plt.plot(recall, precision, linewidth=2)
+        plt.xlabel('Recall')
+        plt.ylabel('Precision')
+        plt.title('Courbe Precision-Recall')
+        plt.grid(True, alpha=0.3)
+        plt.show()
     
-    # Scaling
-    customer_scaled = scaler.transform(customer_processed)
+    def plot_feature_importance(self, top_n=15):
+        """Visualiser l'importance des features"""
+        feature_importance = pd.DataFrame({
+            'feature': self.feature_names,
+            'importance': self.model.feature_importances_
+        }).sort_values('importance', ascending=False)
+        
+        plt.figure(figsize=(10, 8))
+        sns.barplot(data=feature_importance.head(top_n), 
+                   x='importance', y='feature', palette='viridis')
+        plt.title(f'Top {top_n} Features les Plus Importantes\nRandom Forest')
+        plt.xlabel('Importance')
+        plt.tight_layout()
+        plt.show()
+        
+        print("\nTop 10 Features les Plus Importantes:")
+        for i, row in feature_importance.head(10).iterrows():
+            print(f"{row['feature']}: {row['importance']:.4f}")
     
-    # Prédiction
-    churn_probability = model.predict_proba(customer_scaled)[0, 1]
-    churn_prediction = model.predict(customer_scaled)[0]
+    def business_insights(self, df):
+        """Générer des insights business"""
+        print("\n" + "="*50)
+        print("INSIGHTS BUSINESS")
+        print("="*50)
+        
+        insights = []
+        
+        # Taux de churn global
+        churn_rate = df['Churn'].mean()
+        insights.append(f"Taux de churn global: {churn_rate:.2%}")
+        
+        # Analyse par contrat
+        if 'Contract' in df.columns:
+            contract_churn = df.groupby('Contract')['Churn'].mean()
+            insights.append(f"Churn par type de contrat:")
+            for contract, rate in contract_churn.items():
+                insights.append(f"  - {contract}: {rate:.2%}")
+        
+        # Analyse par tenure
+        df['TenureGroup'] = pd.cut(df['tenure'], bins=[0, 6, 12, 24, 60, 72], 
+                                 labels=['0-6m', '6-12m', '1-2a', '2-5a', '5+a'])
+        tenure_churn = df.groupby('TenureGroup')['Churn'].mean()
+        insights.append(f"Churn par ancienneté:")
+        for tenure, rate in tenure_churn.items():
+            insights.append(f"  - {tenure}: {rate:.2%}")
+        
+        # Impact des services
+        service_columns = ['OnlineSecurity', 'TechSupport', 'OnlineBackup']
+        for service in service_columns:
+            if service in df.columns:
+                service_impact = df.groupby(service)['Churn'].mean()
+                insights.append(f"Churn avec {service}: {service_impact.iloc[0]:.2%} vs sans: {service_impact.iloc[1]:.2%}")
+        
+        for insight in insights:
+            print(insight)
     
-    return {
-        'churn_probability': churn_probability,
-        'churn_prediction': churn_prediction,
-        'risk_level': 'Élevé' if churn_probability > 0.7 else 
-                     'Modéré' if churn_probability > 0.3 else 'Faible'
-    }
+    def predict_single_customer(self, customer_data):
+        """Prédire le churn pour un nouveau client"""
+        # Préparer les données
+        customer_df = pd.DataFrame([customer_data])
+        
+        # Feature engineering
+        customer_processed = self.feature_engineering(customer_df)
+        
+        # Encoder
+        customer_encoded = customer_processed.copy()
+        for col in self.label_encoders:
+            if col in customer_encoded.columns:
+                customer_encoded[col] = self.label_encoders[col].transform(customer_encoded[col].astype(str))
+        
+        # Standardiser
+        numerical_cols = customer_encoded.select_dtypes(include=[np.number]).columns
+        customer_encoded[numerical_cols] = self.scaler.transform(customer_encoded[numerical_cols])
+        
+        # Assurer l'ordre des colonnes
+        customer_encoded = customer_encoded[self.feature_names]
+        
+        # Prédiction
+        churn_probability = self.model.predict_proba(customer_encoded)[0][1]
+        churn_prediction = self.model.predict(customer_encoded)[0]
+        
+        return {
+            'churn_probability': churn_probability,
+            'churn_prediction': 'Oui' if churn_prediction == 1 else 'Non',
+            'risk_level': 'Élevé' if churn_probability > 0.7 else 'Modéré' if churn_probability > 0.3 else 'Faible'
+        }
+    
+    def save_model(self, filepath):
+        """Sauvegarder le modèle entraîné"""
+        model_data = {
+            'model': self.model,
+            'scaler': self.scaler,
+            'label_encoders': self.label_encoders,
+            'feature_names': self.feature_names
+        }
+        joblib.dump(model_data, filepath)
+        print(f"Modèle sauvegardé: {filepath}")
+    
+    def load_model(self, filepath):
+        """Charger un modèle sauvegardé"""
+        model_data = joblib.load(filepath)
+        self.model = model_data['model']
+        self.scaler = model_data['scaler']
+        self.label_encoders = model_data['label_encoders']
+        self.feature_names = model_data['feature_names']
+        print(f"Modèle chargé: {filepath}")
 
-def preprocess_new_data(data, label_encoders):
-    """
-    Prétraite les nouvelles données de la même manière que les données d'entraînement
-    """
-    # Implémentez ici le même prétraitement que pour les données d'entraînement
-    pass
+# UTILISATION DU MODÈLE
+def main():
+    # Initialiser le prédicteur
+    predictor = ChurnPredictor()
+    
+    # Entraîner le modèle
+    X_test, y_test, y_pred_proba = predictor.train('churn_predictor.csv')
+    
+    # Insights business
+    df_original = predictor.load_and_preprocess_data('churn_predictor.csv')
+    predictor.business_insights(df_original)
+    
+    # Sauvegarder le modèle
+    predictor.save_model('churn_predictor_model.joblib')
 
 
-# Sauvegarde des artefacts du modèle
-model_artifacts = {
-    'model': best_logistic_model,
-    'scaler': scaler,
-    'label_encoders': label_encoders,
-    'feature_names': X.columns.tolist()
-}
-
-joblib.dump(model_artifacts, 'churn_prediction_model.pkl')
+if __name__ == "__main__":
+    main()
