@@ -1,311 +1,525 @@
+import streamlit as st
 import pandas as pd
 import numpy as np
-from sklearn.model_selection import train_test_split, cross_val_score, GridSearchCV
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.preprocessing import LabelEncoder, StandardScaler
-from sklearn.metrics import classification_report, confusion_matrix, roc_auc_score, precision_recall_curve
+import joblib
 import matplotlib.pyplot as plt
 import seaborn as sns
-import joblib
+import plotly.express as px
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+import io
 
-class ChurnPredictor:
+# Configuration de la page
+st.set_page_config(
+    page_title="Prédicteur de Churn Client",
+    page_icon="📊",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# CSS personnalisé
+st.markdown("""
+<style>
+    .main-header {
+        font-size: 3rem;
+        color: #1f77b4;
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    .prediction-box {
+        padding: 2rem;
+        border-radius: 10px;
+        margin: 1rem 0;
+        border-left: 5px solid;
+    }
+    .high-risk {
+        background-color: #ffebee;
+        border-left-color: #f44336;
+    }
+    .medium-risk {
+        background-color: #fff3e0;
+        border-left-color: #ff9800;
+    }
+    .low-risk {
+        background-color: #e8f5e8;
+        border-left-color: #4caf50;
+    }
+    .metric-card {
+        background-color: #f8f9fa;
+        padding: 1rem;
+        border-radius: 10px;
+        border-left: 4px solid #1f77b4;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+class ChurnPredictorApp:
     def __init__(self):
-        self.model = RandomForestClassifier(
-            n_estimators=200,
-            max_depth=15,
-            min_samples_split=10,
-            min_samples_leaf=5,
-            max_features='sqrt',
-            random_state=42,
-            class_weight='balanced'
-        )
-        self.scaler = StandardScaler()
-        self.label_encoders = {}
+        self.model = None
+        self.scaler = None
+        self.label_encoders = None
         self.feature_names = None
-        
-    def load_and_preprocess_data(self, file_path):
-        """Charger et prétraiter les données"""
-        print("Chargement des données...")
-        df = pd.read_csv(file_path)
-        
-        # Exploration initiale
-        print(f"Shape du dataset: {df.shape}")
-        print(f"Taux de churn: {df['Churn'].value_counts(normalize=True)['Yes']:.2%}")
-        
-        # Nettoyage des données
-        df_clean = df.copy()
-        
-        # Gérer TotalCharges
-        df_clean['TotalCharges'] = pd.to_numeric(df_clean['TotalCharges'], errors='coerce')
-        df_clean['TotalCharges'].fillna(0, inplace=True)
-        
-        # Target encoding
-        df_clean['Churn'] = df_clean['Churn'].map({'Yes': 1, 'No': 0})
-        
-        # Supprimer customerID
-        df_clean = df_clean.drop('customerID', axis=1)
-        
-        return df_clean
+        self.load_model()
     
-    def feature_engineering(self, df):
-        """Ingénierie des caractéristiques"""
-        df_fe = df.copy()
-        
-        # Créer de nouvelles features
-        df_fe['TenureGroup'] = pd.cut(df_fe['tenure'], 
-                                    bins=[0, 12, 24, 36, 48, 60, 72],
-                                    labels=['0-1', '1-2', '2-3', '3-4', '4-5', '5-6'])
-        
-        df_fe['ChargeToTenureRatio'] = df_fe['MonthlyCharges'] / (df_fe['tenure'] + 1)
-        df_fe['TotalMonthlyRatio'] = df_fe['TotalCharges'] / (df_fe['MonthlyCharges'] + 1)
-        
-        # Gérer les valeurs infinies
-        df_fe.replace([np.inf, -np.inf], 0, inplace=True)
-        
-        return df_fe
+    def load_model(self):
+        """Charger le modèle entraîné"""
+        try:
+            model_data = joblib.load('churn_predictor_model.joblib')
+            self.model = model_data['model']
+            self.scaler = model_data['scaler']
+            self.label_encoders = model_data['label_encoders']
+            self.feature_names = model_data['feature_names']
+        except FileNotFoundError:
+            st.error("❌ Modèle non trouvé. Veuillez vous assurer que 'churn_predictor_model.joblib' est dans le même répertoire.")
+            st.stop()
     
-    def encode_features(self, df):
-        """Encoder les variables catégorielles"""
-        df_encoded = df.copy()
-        categorical_cols = df_encoded.select_dtypes(include=['object', 'category']).columns
-        
-        for col in categorical_cols:
-            if col not in self.label_encoders:
-                self.label_encoders[col] = LabelEncoder()
-            df_encoded[col] = self.label_encoders[col].fit_transform(df_encoded[col].astype(str))
-        
-        return df_encoded
-    
-    def prepare_features(self, df):
-        """Préparer les features pour l'entraînement"""
-        # Feature engineering
-        df_processed = self.feature_engineering(df)
-        
-        # Encoding
-        df_encoded = self.encode_features(df_processed)
-        
-        # Séparer features et target
-        X = df_encoded.drop('Churn', axis=1)
-        y = df_encoded['Churn']
-        
-        self.feature_names = X.columns.tolist()
-        
-        return X, y
-    
-    def train(self, file_path, test_size=0.2):
-        """Entraîner le modèle complet"""
-        # Charger et prétraiter les données
-        df = self.load_and_preprocess_data(file_path)
-        
-        # Préparer les features
-        X, y = self.prepare_features(df)
-        
-        # Split train/test
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=test_size, random_state=42, stratify=y
-        )
-        
-        # Standardiser les features numériques
-        numerical_cols = X.select_dtypes(include=[np.number]).columns
-        X_train[numerical_cols] = self.scaler.fit_transform(X_train[numerical_cols])
-        X_test[numerical_cols] = self.scaler.transform(X_test[numerical_cols])
-        
-        print("Entraînement du modèle Random Forest...")
-        # Entraîner le modèle
-        self.model.fit(X_train, y_train)
-        
-        # Évaluation
-        train_score = self.model.score(X_train, y_train)
-        test_score = self.model.score(X_test, y_test)
-        
-        print(f"Score entraînement: {train_score:.4f}")
-        print(f"Score test: {test_score:.4f}")
-        
-        # Prédictions
-        y_pred = self.model.predict(X_test)
-        y_pred_proba = self.model.predict_proba(X_test)[:, 1]
-        
-        # Métriques détaillées
-        self.evaluate_model(y_test, y_pred, y_pred_proba)
-        
-        # Feature importance
-        self.plot_feature_importance()
-        
-        return X_test, y_test, y_pred_proba
-    
-    def evaluate_model(self, y_true, y_pred, y_pred_proba):
-        """Évaluation complète du modèle"""
-        print("\n" + "="*50)
-        print("ÉVALUATION DU MODÈLE")
-        print("="*50)
-        
-        # Métriques de base
-        auc_score = roc_auc_score(y_true, y_pred_proba)
-        print(f"AUC Score: {auc_score:.4f}")
-        
-        # Rapport de classification
-        print("\nRapport de Classification:")
-        print(classification_report(y_true, y_pred, target_names=['Non-Churn', 'Churn']))
-        
-        # Matrice de confusion
-        plt.figure(figsize=(10, 4))
-        
-        plt.subplot(1, 2, 1)
-        cm = confusion_matrix(y_true, y_pred)
-        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', 
-                   xticklabels=['Non-Churn', 'Churn'],
-                   yticklabels=['Non-Churn', 'Churn'])
-        plt.title('Matrice de Confusion')
-        plt.ylabel('Vérité terrain')
-        plt.xlabel('Prédictions')
-        
-        # Courbe ROC
-        plt.subplot(1, 2, 2)
-        from sklearn.metrics import roc_curve
-        fpr, tpr, _ = roc_curve(y_true, y_pred_proba)
-        plt.plot(fpr, tpr, label=f'Random Forest (AUC = {auc_score:.3f})', linewidth=2)
-        plt.plot([0, 1], [0, 1], 'k--', alpha=0.5, label='Aléatoire')
-        plt.xlabel('Taux Faux Positifs')
-        plt.ylabel('Taux Vrais Positifs')
-        plt.title('Courbe ROC')
-        plt.legend()
-        plt.grid(True, alpha=0.3)
-        
-        plt.tight_layout()
-        plt.show()
-        
-        # Courbe Precision-Recall
-        precision, recall, _ = precision_recall_curve(y_true, y_pred_proba)
-        plt.figure(figsize=(8, 6))
-        plt.plot(recall, precision, linewidth=2)
-        plt.xlabel('Recall')
-        plt.ylabel('Precision')
-        plt.title('Courbe Precision-Recall')
-        plt.grid(True, alpha=0.3)
-        plt.show()
-    
-    def plot_feature_importance(self, top_n=15):
-        """Visualiser l'importance des features"""
-        feature_importance = pd.DataFrame({
-            'feature': self.feature_names,
-            'importance': self.model.feature_importances_
-        }).sort_values('importance', ascending=False)
-        
-        plt.figure(figsize=(10, 8))
-        sns.barplot(data=feature_importance.head(top_n), 
-                   x='importance', y='feature', palette='viridis')
-        plt.title(f'Top {top_n} Features les Plus Importantes\nRandom Forest')
-        plt.xlabel('Importance')
-        plt.tight_layout()
-        plt.show()
-        
-        print("\nTop 10 Features les Plus Importantes:")
-        for i, row in feature_importance.head(10).iterrows():
-            print(f"{row['feature']}: {row['importance']:.4f}")
-    
-    def business_insights(self, df):
-        """Générer des insights business"""
-        print("\n" + "="*50)
-        print("INSIGHTS BUSINESS")
-        print("="*50)
-        
-        insights = []
-        
-        # Taux de churn global
-        churn_rate = df['Churn'].mean()
-        insights.append(f"Taux de churn global: {churn_rate:.2%}")
-        
-        # Analyse par contrat
-        if 'Contract' in df.columns:
-            contract_churn = df.groupby('Contract')['Churn'].mean()
-            insights.append(f"Churn par type de contrat:")
-            for contract, rate in contract_churn.items():
-                insights.append(f"  - {contract}: {rate:.2%}")
-        
-        # Analyse par tenure
-        df['TenureGroup'] = pd.cut(df['tenure'], bins=[0, 6, 12, 24, 60, 72], 
-                                 labels=['0-6m', '6-12m', '1-2a', '2-5a', '5+a'])
-        tenure_churn = df.groupby('TenureGroup')['Churn'].mean()
-        insights.append(f"Churn par ancienneté:")
-        for tenure, rate in tenure_churn.items():
-            insights.append(f"  - {tenure}: {rate:.2%}")
-        
-        # Impact des services
-        service_columns = ['OnlineSecurity', 'TechSupport', 'OnlineBackup']
-        for service in service_columns:
-            if service in df.columns:
-                service_impact = df.groupby(service)['Churn'].mean()
-                insights.append(f"Churn avec {service}: {service_impact.iloc[0]:.2%} vs sans: {service_impact.iloc[1]:.2%}")
-        
-        for insight in insights:
-            print(insight)
-    
-    def predict_single_customer(self, customer_data):
-        """Prédire le churn pour un nouveau client"""
-        # Préparer les données
+    def preprocess_customer_data(self, customer_data):
+        """Prétraiter les données d'un client"""
         customer_df = pd.DataFrame([customer_data])
         
-        # Feature engineering
-        customer_processed = self.feature_engineering(customer_df)
+        # Encoder les variables catégorielles
+        for col, encoder in self.label_encoders.items():
+            if col in customer_df.columns:
+                customer_df[col] = encoder.transform(customer_df[col].astype(str))
         
-        # Encoder
-        customer_encoded = customer_processed.copy()
-        for col in self.label_encoders:
-            if col in customer_encoded.columns:
-                customer_encoded[col] = self.label_encoders[col].transform(customer_encoded[col].astype(str))
-        
-        # Standardiser
-        numerical_cols = customer_encoded.select_dtypes(include=[np.number]).columns
-        customer_encoded[numerical_cols] = self.scaler.transform(customer_encoded[numerical_cols])
+        # Standardiser les features numériques
+        numerical_cols = customer_df.select_dtypes(include=[np.number]).columns
+        customer_df[numerical_cols] = self.scaler.transform(customer_df[numerical_cols])
         
         # Assurer l'ordre des colonnes
-        customer_encoded = customer_encoded[self.feature_names]
+        customer_df = customer_df[self.feature_names]
         
-        # Prédiction
-        churn_probability = self.model.predict_proba(customer_encoded)[0][1]
-        churn_prediction = self.model.predict(customer_encoded)[0]
-        
-        return {
-            'churn_probability': churn_probability,
-            'churn_prediction': 'Oui' if churn_prediction == 1 else 'Non',
-            'risk_level': 'Élevé' if churn_probability > 0.7 else 'Modéré' if churn_probability > 0.3 else 'Faible'
-        }
+        return customer_df
     
-    def save_model(self, filepath):
-        """Sauvegarder le modèle entraîné"""
-        model_data = {
-            'model': self.model,
-            'scaler': self.scaler,
-            'label_encoders': self.label_encoders,
-            'feature_names': self.feature_names
-        }
-        joblib.dump(model_data, filepath)
-        print(f"Modèle sauvegardé: {filepath}")
+    def predict(self, customer_data):
+        """Faire une prédiction"""
+        try:
+            processed_data = self.preprocess_customer_data(customer_data)
+            probability = self.model.predict_proba(processed_data)[0][1]
+            prediction = self.model.predict(processed_data)[0]
+            
+            return {
+                'probability': probability,
+                'prediction': prediction,
+                'risk_level': self.get_risk_level(probability)
+            }
+        except Exception as e:
+            st.error(f"Erreur lors de la prédiction: {str(e)}")
+            return None
     
-    def load_model(self, filepath):
-        """Charger un modèle sauvegardé"""
-        model_data = joblib.load(filepath)
-        self.model = model_data['model']
-        self.scaler = model_data['scaler']
-        self.label_encoders = model_data['label_encoders']
-        self.feature_names = model_data['feature_names']
-        print(f"Modèle chargé: {filepath}")
+    def get_risk_level(self, probability):
+        """Déterminer le niveau de risque"""
+        if probability >= 0.7:
+            return "Élevé"
+        elif probability >= 0.4:
+            return "Modéré"
+        else:
+            return "Faible"
+    
+    def get_risk_color(self, risk_level):
+        """Couleur selon le niveau de risque"""
+        colors = {
+            "Élevé": "#ff4444",
+            "Modéré": "#ffaa00",
+            "Faible": "#44ff44"
+        }
+        return colors.get(risk_level, "#cccccc")
 
-# UTILISATION DU MODÈLE
 def main():
-    # Initialiser le prédicteur
-    predictor = ChurnPredictor()
+    # Initialiser l'application
+    predictor_app = ChurnPredictorApp()
     
-    # Entraîner le modèle
-    X_test, y_test, y_pred_proba = predictor.train('churn_predictor.csv')
+    # En-tête principale
+    st.markdown('<h1 class="main-header">🔮 Prédicteur de Churn Client</h1>', unsafe_allow_html=True)
     
-    # Insights business
-    df_original = predictor.load_and_preprocess_data('churn_predictor.csv')
-    predictor.business_insights(df_original)
+    # Sidebar pour la navigation
+    st.sidebar.title("Navigation")
+    app_mode = st.sidebar.selectbox(
+        "Choisissez le mode",
+        ["🏠 Prédiction Unique", "📊 Analyse par Lot", "ℹ️ Aide & Documentation"]
+    )
     
-    # Sauvegarder le modèle
-    predictor.save_model('churn_predictor_model.joblib')
+    if app_mode == "🏠 Prédiction Unique":
+        show_single_prediction(predictor_app)
+    elif app_mode == "📊 Analyse par Lot":
+        show_batch_analysis(predictor_app)
+    else:
+        show_documentation()
 
+def show_single_prediction(predictor_app):
+    """Interface pour la prédiction unique"""
+    
+    st.header("📋 Saisie des Informations Client")
+    
+    # Layout en colonnes
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.subheader("Informations Démographiques")
+        gender = st.selectbox("Genre", ["Male", "Female"])
+        senior_citizen = st.selectbox("Senior Citizen", [0, 1])
+        partner = st.selectbox("Partenaire", ["Yes", "No"])
+        dependents = st.selectbox("Dépendants", ["Yes", "No"])
+        
+        st.subheader("Informations de Contrat")
+        tenure = st.slider("Ancienneté (mois)", 0, 72, 12)
+        contract = st.selectbox("Type de Contrat", ["Month-to-month", "One year", "Two year"])
+        paperless_billing = st.selectbox("Facturation Sans Papier", ["Yes", "No"])
+        payment_method = st.selectbox("Méthode de Paiement", [
+            "Electronic check", "Mailed check", "Bank transfer (automatic)", "Credit card (automatic)"
+        ])
+    
+    with col2:
+        st.subheader("Services")
+        phone_service = st.selectbox("Service Téléphonique", ["Yes", "No"])
+        multiple_lines = st.selectbox("Lignes Multiples", ["Yes", "No", "No phone service"])
+        
+        st.subheader("Services Internet")
+        internet_service = st.selectbox("Service Internet", ["DSL", "Fiber optic", "No"])
+        online_security = st.selectbox("Sécurité En Ligne", ["Yes", "No", "No internet service"])
+        online_backup = st.selectbox("Sauvegarde En Ligne", ["Yes", "No", "No internet service"])
+        device_protection = st.selectbox("Protection d'Appareil", ["Yes", "No", "No internet service"])
+        tech_support = st.selectbox("Support Technique", ["Yes", "No", "No internet service"])
+        streaming_tv = st.selectbox("TV en Streaming", ["Yes", "No", "No internet service"])
+        streaming_movies = st.selectbox("Films en Streaming", ["Yes", "No", "No internet service"])
+        
+        st.subheader("Coûts")
+        monthly_charges = st.slider("Charges Mensuelles ($)", 10.0, 120.0, 50.0)
+        total_charges = st.slider("Charges Totales ($)", 0.0, 10000.0, 1000.0)
+    
+    # Bouton de prédiction
+    if st.button("🔮 Prédire le Risque de Churn", type="primary", use_container_width=True):
+        # Préparer les données
+        customer_data = {
+            'gender': gender,
+            'SeniorCitizen': senior_citizen,
+            'Partner': partner,
+            'Dependents': dependents,
+            'tenure': tenure,
+            'PhoneService': phone_service,
+            'MultipleLines': multiple_lines,
+            'InternetService': internet_service,
+            'OnlineSecurity': online_security,
+            'OnlineBackup': online_backup,
+            'DeviceProtection': device_protection,
+            'TechSupport': tech_support,
+            'StreamingTV': streaming_tv,
+            'StreamingMovies': streaming_movies,
+            'Contract': contract,
+            'PaperlessBilling': paperless_billing,
+            'PaymentMethod': payment_method,
+            'MonthlyCharges': monthly_charges,
+            'TotalCharges': total_charges
+        }
+        
+        # Faire la prédiction
+        result = predictor_app.predict(customer_data)
+        
+        if result:
+            display_prediction_result(result, customer_data)
+
+def display_prediction_result(result, customer_data):
+    """Afficher les résultats de prédiction"""
+    
+    probability = result['probability']
+    risk_level = result['risk_level']
+    risk_color = predictor_app.get_risk_color(risk_level)
+    
+    st.markdown("---")
+    st.header("🎯 Résultats de la Prédiction")
+    
+    # Métriques principales
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        st.metric(
+            label="Probabilité de Churn",
+            value=f"{probability:.1%}",
+            delta=f"Niveau {risk_level}" if probability > 0.5 else None,
+            delta_color="inverse"
+        )
+    
+    with col2:
+        st.metric(
+            label="Niveau de Risque",
+            value=risk_level
+        )
+    
+    with col3:
+        prediction_text = "⚠️ Client à Risque" if result['prediction'] == 1 else "✅ Client Fidèle"
+        st.metric(
+            label="Recommandation",
+            value=prediction_text
+        )
+    
+    # Jauge de probabilité
+    fig = go.Figure(go.Indicator(
+        mode = "gauge+number+delta",
+        value = probability * 100,
+        domain = {'x': [0, 1], 'y': [0, 1]},
+        title = {'text': "Score de Risque de Churn"},
+        delta = {'reference': 50},
+        gauge = {
+            'axis': {'range': [None, 100]},
+            'bar': {'color': risk_color},
+            'steps': [
+                {'range': [0, 30], 'color': "lightgray"},
+                {'range': [30, 70], 'color': "gray"},
+                {'range': [70, 100], 'color': "darkgray"}
+            ],
+            'threshold': {
+                'line': {'color': "red", 'width': 4},
+                'thickness': 0.75,
+                'value': 90
+            }
+        }
+    ))
+    
+    fig.update_layout(height=300)
+    st.plotly_chart(fig, use_container_width=True)
+    
+    # Recommandations selon le niveau de risque
+    st.subheader("💡 Recommandations")
+    
+    if risk_level == "Élevé":
+        st.error("""
+        **Actions Immédiates Recommandées:**
+        - 📞 Contact proactif dans les 24h
+        - 💰 Offre de fidélisation personnalisée
+        - 🔍 Analyse des raisons de mécontentement
+        - 🎁 Proposition d'avantages immédiats
+        """)
+    elif risk_level == "Modéré":
+        st.warning("""
+        **Actions Préventives:**
+        - 📧 Email de vérification de satisfaction
+        - 🔄 Revue du plan de service
+        - 📊 Surveillance accrue
+        - 🏆 Programme de fidélité
+        """)
+    else:
+        st.success("""
+        **Actions de Fidélisation:**
+        - ✅ Maintenance de la satisfaction
+        - 🎯 Offres de services additionnels
+        - ⭐ Programme de recommandation
+        - 📈 Suivi régulier
+        """)
+    
+    # Analyse détaillée
+    with st.expander("📊 Analyse Détaillée du Profil"):
+        show_detailed_analysis(customer_data, probability)
+
+def show_detailed_analysis(customer_data, probability):
+    """Afficher l'analyse détaillée"""
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.subheader("Facteurs de Risque")
+        
+        risk_factors = []
+        
+        # Analyse des facteurs de risque
+        if customer_data['Contract'] == 'Month-to-month':
+            risk_factors.append("Contrat mensuel (risque élevé)")
+        if customer_data['tenure'] < 12:
+            risk_factors.append("Ancienneté < 1 an")
+        if customer_data['OnlineSecurity'] == 'No' and customer_data['InternetService'] != 'No':
+            risk_factors.append("Pas de sécurité en ligne")
+        if customer_data['TechSupport'] == 'No' and customer_data['InternetService'] != 'No':
+            risk_factors.append("Pas de support technique")
+        if customer_data['PaymentMethod'] == 'Electronic check':
+            risk_factors.append("Paiement par chèque électronique")
+        
+        if risk_factors:
+            for factor in risk_factors:
+                st.write(f"• {factor}")
+        else:
+            st.write("Aucun facteur de risque majeur identifié")
+    
+    with col2:
+        st.subheader("Indicateurs Clés")
+        
+        metrics_data = {
+            "Ancienneté": f"{customer_data['tenure']} mois",
+            "Type de contrat": customer_data['Contract'],
+            "Charges mensuelles": f"${customer_data['MonthlyCharges']}",
+            "Services internet": customer_data['InternetService'],
+            "Support technique": customer_data['TechSupport']
+        }
+        
+        for key, value in metrics_data.items():
+            st.write(f"**{key}:** {value}")
+
+def show_batch_analysis(predictor_app):
+    """Interface pour l'analyse par lot"""
+    
+    st.header("📊 Analyse de Churn par Lot")
+    
+    uploaded_file = st.file_uploader(
+        "Téléchargez un fichier CSV avec les données clients",
+        type=['csv'],
+        help="Le fichier doit contenir les mêmes colonnes que le dataset d'entraînement"
+    )
+    
+    if uploaded_file is not None:
+        try:
+            # Charger les données
+            df = pd.read_csv(uploaded_file)
+            st.success(f"✅ Fichier chargé avec succès: {len(df)} clients")
+            
+            # Aperçu des données
+            with st.expander("👀 Aperçu des Données"):
+                st.dataframe(df.head())
+            
+            # Prédictions par lot
+            if st.button("🎯 Lancer l'Analyse de Churn", type="primary"):
+                with st.spinner("Analyse en cours..."):
+                    results = batch_predict(predictor_app, df)
+                    display_batch_results(results, df)
+        
+        except Exception as e:
+            st.error(f"Erreur lors du chargement du fichier: {str(e)}")
+
+def batch_predict(predictor_app, df):
+    """Prédictions par lot"""
+    results = []
+    
+    for _, row in df.iterrows():
+        try:
+            # Convertir la ligne en dictionnaire
+            customer_data = row.to_dict()
+            
+            # Faire la prédiction
+            result = predictor_app.predict(customer_data)
+            if result:
+                results.append({
+                    'customer_id': customer_data.get('customerID', 'N/A'),
+                    'churn_probability': result['probability'],
+                    'prediction': result['prediction'],
+                    'risk_level': result['risk_level']
+                })
+        except Exception as e:
+            st.warning(f"Erreur avec un client: {str(e)}")
+    
+    return pd.DataFrame(results)
+
+def display_batch_results(results_df, original_df):
+    """Afficher les résultats par lot"""
+    
+    st.header("📈 Résultats de l'Analyse par Lot")
+    
+    # Métriques globales
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        total_customers = len(results_df)
+        st.metric("Clients Analysés", total_customers)
+    
+    with col2:
+        high_risk = len(results_df[results_df['risk_level'] == 'Élevé'])
+        st.metric("Risque Élevé", high_risk)
+    
+    with col3:
+        churn_rate = len(results_df[results_df['prediction'] == 1]) / len(results_df)
+        st.metric("Taux de Churn Prédit", f"{churn_rate:.1%}")
+    
+    with col4:
+        avg_probability = results_df['churn_probability'].mean()
+        st.metric("Probabilité Moyenne", f"{avg_probability:.1%}")
+    
+    # Visualisations
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        # Répartition des risques
+        risk_counts = results_df['risk_level'].value_counts()
+        fig = px.pie(
+            values=risk_counts.values,
+            names=risk_counts.index,
+            title="Répartition des Niveaux de Risque",
+            color=risk_counts.index,
+            color_discrete_map={
+                'Élevé': '#ff4444',
+                'Modéré': '#ffaa00',
+                'Faible': '#44ff44'
+            }
+        )
+        st.plotly_chart(fig, use_container_width=True)
+    
+    with col2:
+        # Distribution des probabilités
+        fig = px.histogram(
+            results_df,
+            x='churn_probability',
+            nbins=20,
+            title="Distribution des Probabilités de Churn",
+            color_discrete_sequence=['#ff4444']
+        )
+        fig.update_layout(xaxis_title="Probabilité de Churn", yaxis_title="Nombre de Clients")
+        st.plotly_chart(fig, use_container_width=True)
+    
+    # Tableau des résultats
+    st.subheader("📋 Détail des Prédictions")
+    results_display = results_df.copy()
+    results_display['churn_probability'] = results_display['churn_probability'].apply(lambda x: f"{x:.1%}")
+    
+    st.dataframe(results_display, use_container_width=True)
+    
+    # Téléchargement des résultats
+    csv = results_df.to_csv(index=False)
+    st.download_button(
+        label="📥 Télécharger les Résultats (CSV)",
+        data=csv,
+        file_name="predictions_churn.csv",
+        mime="text/csv"
+    )
+
+def show_documentation():
+    """Afficher la documentation"""
+    
+    st.header("📚 Documentation et Aide")
+    
+    st.markdown("""
+    ## 🔍 À Propos de cette Application
+    
+    Cette application utilise un modèle de Machine Learning (Random Forest) pour prédire 
+    la probabilité qu'un client quitte votre entreprise (churn).
+    
+    ## 🎯 Comment Utiliser
+    
+    ### Prédiction Unique
+    1. Remplissez toutes les informations du client dans le formulaire
+    2. Cliquez sur "Prédire le Risque de Churn"
+    3. Consultez les résultats et recommandations
+    
+    ### Analyse par Lot
+    1. Préparez un fichier CSV avec les données de vos clients
+    2. Téléchargez le fichier dans l'onglet "Analyse par Lot"
+    3. Lancez l'analyse et téléchargez les résultats
+    
+    ## 📊 Interprétation des Résultats
+    
+    - **Risque Faible** (< 40%) : Client fidèle, actions de fidélisation standard
+    - **Risque Modéré** (40-70%) : Surveillance nécessaire, actions préventives
+    - **Risque Élevé** (> 70%) : Intervention immédiate requise
+    
+    ## 🔧 Facteurs Clés Influençant le Churn
+    
+    Le modèle considère principalement:
+    - Ancienneté du client
+    - Type de contrat
+    - Services souscrits
+    - Méthode de paiement
+    - Historique des charges
+    
+    ## 📞 Support
+    
+    Pour toute question ou problème technique, contactez l'équipe data science.
+    """)
 
 if __name__ == "__main__":
+    # Initialiser l'application de prédiction
+    predictor_app = ChurnPredictorApp()
     main()
