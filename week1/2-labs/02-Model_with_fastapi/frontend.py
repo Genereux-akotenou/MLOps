@@ -15,13 +15,13 @@ st.markdown(
     """
     <style>
     .main {
-        background-color: #f5f5f5;
+        background-color: #d5f5b5;
         padding: 2rem;
         border-radius: 1rem;
         box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
     }
     .sidebar .sidebar-content {
-        background-color: #fff;
+        background-color: #bdd;
         border-right: 1px solid #ddd;
     }
     </style>
