@@ -5,6 +5,7 @@ services:
     image: ollama/ollama
     container_name: ollama
     ports:
+      # -"port_internal:port_external"
       - "11434:11434"
     volumes:
       - ollama:/root/.ollama

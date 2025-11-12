@@ -1,6 +1,7 @@
 FROM python:3.10-slim
 
 LABEL maintainer="Généreux Akotenou <genereux.akotenou@gmail.com>"
+
 WORKDIR /app
 COPY requirements.txt .
 RUN pip install --upgrade pip
