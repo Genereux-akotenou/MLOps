@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Service Unavailable</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background: #f4f4f4;
+        padding: 40px;
+        text-align: center;
+    }
+    .box {
+        background: white;
+        max-width: 700px;
+        margin: auto;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 0 12px rgba(0,0,0,0.1);
+    }
+    h1 { color: #cc0000; }
+    table {
+        margin: 20px auto;
+        border-collapse: collapse;
+        width: 90%;
+    }
+    th, td {
+        padding: 10px;
+        border: 1px solid #ddd;
+    }
+    th {
+        background: #333;
+        color: white;
+    }
+</style>
+</head>
+<body>
+
+<div class="box">
+    <h1>🚫 Service Unavailable</h1>
+
+    <!-- <p><strong>EN:</strong> The application you are trying to access is not deployed yet.<br>
+    If you see this message, it means your service container is not running or not correctly configured.</p> -->
+
+    <p><strong>FR :</strong> L'application que vous essayez d’ouvrir n’est pas encore déployée.<br>
+    Si vous voyez ce message, cela signifie que votre conteneur n’est pas lancé ou mal configuré.</p>
+
+    <hr>
+
+    <h2>A_votre_Attention: Deployment Slots (Ports)</h2>
+
+    <table>
+        <tr>
+            <th>Student</th>
+            <th>Frontend Port</th>
+            <th>Backend Port</th>
+            <th>Path</th>
+        </tr>
+        <tr><td>Student 1</td><td>3001</td><td>7001</td><td>/app1</td></tr>
+        <tr><td>Student 2</td><td>3002</td><td>7002</td><td>/app2</td></tr>
+        <tr><td>Student 3</td><td>3003</td><td>7003</td><td>/app3</td></tr>
+        <tr><td>Student 4</td><td>3004</td><td>7004</td><td>/app4</td></tr>
+        <tr><td>Student 5</td><td>3005</td><td>7005</td><td>/app5</td></tr>
+        <tr><td>Student 6</td><td>3006</td><td>7006</td><td>/app6</td></tr>
+        <tr><td>Student 7</td><td>3007</td><td>7007</td><td>/app7</td></tr>
+        <tr><td>Student 8</td><td>3008</td><td>7008</td><td>/app8</td></tr>
+        <tr><td>Student 9</td><td>3009</td><td>7009</td><td>/app9</td></tr>
+        <tr><td>Student 10</td><td>3010</td><td>7010</td><td>/app10</td></tr>
+    </table>
+
+    <p style="margin-top:20px;"><em>
+        Deploy your containers using your assigned ports and path.<br>
+        Example: Student 1 → frontend on 3001, backend on 7001, accessed via /app1.
+    </em></p>
+</div>
+
+</body>
+</html>
