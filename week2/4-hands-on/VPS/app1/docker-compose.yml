@@ -5,7 +5,7 @@ services:
     container_name: backend1
     image: 13365920/catdog-api:latest
     ports:
-      - "8000:5001"
+      - "8000:3001"
     networks:
       - shared-network
 
@@ -13,7 +13,7 @@ services:
     container_name: frontend1
     image: 13365920/catdog-frontend:latest
     ports:
-      - "8501:6001"
+      - "8501:7001"
     networks:
       - shared-network
     depends_on:
