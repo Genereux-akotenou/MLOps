@@ -1,6 +1,13 @@
 import streamlit as st
 from PIL import Image
 import requests
+import re
+
+def get_prefix():
+    ws_url = st.runtime.scriptrunner.get_script_run_ctx()._session_info.ws.url
+    match = re.search(r"wss?://[^/]+(/[^/]+)/_stcore", ws_url)
+    return match.group(1) if match else ""
+PREFIX = get_prefix()  
 
 st.set_page_config(
     page_title="Cat vs Dog Classifier",
@@ -35,7 +42,7 @@ if upload:
     files = {"file": upload.getvalue()}
 
     with st.spinner("Analyzing the image..."):
-        req = requests.post("/api/predict", files=files)
+        req = requests.post(f"{PREFIX}/api/predict", files=files)
         resultat = req.json()
         prob_cat = resultat["cat_proba"] * 100
         prob_dog = resultat["dog_proba"] * 100
