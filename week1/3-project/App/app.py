@@ -68,4 +68,4 @@ if st.button("Prédire le Churn"):
         st.error(f"Erreur de connexion à l'API : {str(e)}. Vérifie que l'API est lancée !")
 
 
-st.write("@2025 Mohamed Sall - KounamaDev")
+st.markdown("&copy; 2025 Mon Application")
