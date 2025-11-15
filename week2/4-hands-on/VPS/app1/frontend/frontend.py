@@ -35,7 +35,7 @@ if upload:
     files = {"file": upload.getvalue()}
 
     with st.spinner("Analyzing the image..."):
-        req = requests.post("http://backend:8000/predict", files=files)
+        req = requests.post("/api/predict", files=files)
         resultat = req.json()
         prob_cat = resultat["cat_proba"] * 100
         prob_dog = resultat["dog_proba"] * 100
