@@ -9,7 +9,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-st.title("Cat vs Dog Classifier :cat: :dog:")
+st.title("Data Afrique Hub: Cat vs Dog Classifier :cat: :dog:")
 
 # st.markdown(
 #     """
