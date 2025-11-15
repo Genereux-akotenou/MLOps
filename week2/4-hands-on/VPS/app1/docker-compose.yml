@@ -3,7 +3,7 @@ version: '3.8'
 services:
   backend1:
     container_name: backend1
-    image: 13365920/catdog-api:latest
+    image: 13365920/catdog-api:arm64
     ports:
       - "8000:3001"
     networks:
@@ -11,7 +11,7 @@ services:
 
   frontend1:
     container_name: frontend1
-    image: 13365920/catdog-frontend:latest
+    image: 13365920/catdog-frontend:arm64
     ports:
       - "8501:7001"
     networks:
