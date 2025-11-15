@@ -11,52 +11,52 @@ st.set_page_config(
 
 st.title("Cat vs Dog Classifier :cat: :dog:")
 
-st.markdown(
-    """
-    <style>
-    .main {
-        background-color: #f5f5f5;
-        padding: 2rem;
-        border-radius: 1rem;
-        box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-    }
-    .sidebar .sidebar-content {
-        background-color: #fff;
-        border-right: 1px solid #ddd;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
 # st.markdown(
 #     """
 #     <style>
-#     /* Full app background */
-#     .stApp {
-#         background-color: #fff9c4;  /* Light Yellow */
-#     }
-
-#     /* Main content container */
 #     .main {
-#         background-color: #fff9c4; /* Same Yellow for consistency */
+#         background-color: #f5f5f5;
 #         padding: 2rem;
 #         border-radius: 1rem;
+#         box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
 #     }
-
-#     /* Sidebar background */
 #     .sidebar .sidebar-content {
-#         background-color: #fffbdd;
-#         border-right: 2px solid #f0e68c;
-#     }
-
-#     /* Customize headers */
-#     h1, h2, h3 {
-#         color: #665c00;
+#         background-color: #fff;
+#         border-right: 1px solid #ddd;
 #     }
 #     </style>
 #     """,
 #     unsafe_allow_html=True,
 # )
+st.markdown(
+    """
+    <style>
+    /* Full app background */
+    .stApp {
+        background-color: #fff9c4;  /* Light Yellow */
+    }
+
+    /* Main content container */
+    .main {
+        background-color: #fff9c4; /* Same Yellow for consistency */
+        padding: 2rem;
+        border-radius: 1rem;
+    }
+
+    /* Sidebar background */
+    .sidebar .sidebar-content {
+        background-color: #fffbdd;
+        border-right: 2px solid #f0e68c;
+    }
+
+    /* Customize headers */
+    h1, h2, h3 {
+        color: #665c00;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
 
 upload = st.file_uploader("Upload an image of a cat or dog", type=['png', 'jpg', 'jpeg'])

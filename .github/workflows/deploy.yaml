@@ -19,7 +19,7 @@ jobs:
         with:
           timeout: 90m
           host: ${{ secrets.DEPLOY_HOST }}
-          port: ${{ secrets.DEPLOY_PORT }}
+          port: ${{ secrets.DEPLOY_PORT }} #default 22
           username: ${{ secrets.DEPLOY_USER }}
           password: ${{ secrets.DEPLOY_PASSWORD }}
 
@@ -31,11 +31,11 @@ jobs:
             git pull
 
             echo "[2/4] Shutting down old containers..."
-            docker compose down || docker-compose down || true
+            docker compose down || true
 
             echo "[3/4] Building docker images..."
             docker compose build --progress=plain | tee build.log &
-
+          
             BUILD_PID=$!
             while kill -0 $BUILD_PID 2> /dev/null; do
               echo "[+] Still building at $(date)..."
@@ -43,6 +43,6 @@ jobs:
             done
 
             echo "[4/4] Starting new containers..."
-            docker compose up -d || docker-compose up -d
+            docker compose up -d
 
             echo "Deployment complete!"
