@@ -10,7 +10,9 @@ from PIL import Image
 # ------------------------------------------------------- 
 # App
 # ------------------------------------------------------- 
-app = FastAPI()
+app = FastAPI(
+    title="DATA_AFRIQUE_HUB - Cat vs Dog Classifier",
+    root_path="/app1/api")
 
 # ------------------------------------------------------- 
 # Utils
