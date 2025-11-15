@@ -56,7 +56,7 @@ if st.button("Prédire le Churn"):
 
     
     try:
-        response = requests.post("http://127.0.0.1:8000/predict", json=data)
+        response = requests.post("https://apimlops.onrender.com/predict", json=data)
         result = response.json()
 
         if "error" in result:
