@@ -5,7 +5,7 @@ services:
     container_name: backend1
     # image: 13365920/catdog-api:arm64
     build:
-      context: ./backend1
+      context: ./backend
       dockerfile: Dockerfile
     ports:
       - "8000:3001"
@@ -16,7 +16,7 @@ services:
     container_name: frontend1
     # image: 13365920/catdog-frontend:arm64
     build:
-      context: ./frontend1
+      context: ./frontend
       dockerfile: Dockerfile
     ports:
       - "8501:7001"
