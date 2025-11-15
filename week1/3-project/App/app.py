@@ -6,7 +6,7 @@ import json
 st.title("Churn Predictor App - Allo Telecom S.A")
 
 
-st.write("Entre les détails du client pour prédire s'il va churn (quitter). On va réussir ta certification ! 💪")
+st.write("Entre les détails du client pour prédire s'il va churn (quitter).  💪")
 
 
 gender = st.selectbox("Gender", ["Female", "Male"])
@@ -68,4 +68,4 @@ if st.button("Prédire le Churn"):
         st.error(f"Erreur de connexion à l'API : {str(e)}. Vérifie que l'API est lancée !")
 
 
-st.write("Pour lancer : `streamlit run app.py` dans ton terminal. Ouvre http://localhost:8501 dans ton navigateur.")
+st.write("@2025 Mohamed Sall - KounamaDev")
