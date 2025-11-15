@@ -1,6 +1,6 @@
+python-multipart
 setuptools
 fastapi
 uvicorn
-python-multipart
 tensorflow
 pillow
