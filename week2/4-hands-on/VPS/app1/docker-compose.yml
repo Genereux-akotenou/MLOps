@@ -7,7 +7,7 @@ services:
     ports:
       - "8000:3001"
     networks:
-      - shared-network
+      - tortank-shared-network
 
   frontend1:
     container_name: frontend1
@@ -15,7 +15,7 @@ services:
     ports:
       - "8501:7001"
     networks:
-      - shared-network
+      - tortank-shared-network
     depends_on:
       - backend1
 
