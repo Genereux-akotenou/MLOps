@@ -10,8 +10,8 @@ app = FastAPI()
 def api_info():
     return {"info": "Welcome carapuce"}
 
-model = joblib.load("churn_model.pkl") 
-label_encoders = joblib.load('label_encoders.pkl')
+model = joblib.load("../churn_model.pkl") 
+label_encoders = joblib.load('../label_encoders.pkl')
 
 expected_features = [
     'gender', 'SeniorCitizen', 'Partner', 'Dependents', 'tenure', 'PhoneService',
@@ -20,7 +20,7 @@ expected_features = [
     'Contract', 'PaperlessBilling', 'PaymentMethod', 'MonthlyCharges', 'TotalCharges'
 ]
 
-# Liste des colonnes catégorielles (comme dans ton entraînement, sans SeniorCitizen/tenure/etc.)
+
 categorical_cols = ['gender', 'Partner', 'Dependents', 'PhoneService', 'MultipleLines', 'InternetService',
                     'OnlineSecurity', 'OnlineBackup', 'DeviceProtection', 'TechSupport', 'StreamingTV',
                     'StreamingMovies', 'Contract', 'PaperlessBilling', 'PaymentMethod']
