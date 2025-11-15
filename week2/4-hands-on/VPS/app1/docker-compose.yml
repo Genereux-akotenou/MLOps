@@ -19,7 +19,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
-      - "8501:7001"
+      - "8080:7001"
     networks:
       - tortank-shared-network
     depends_on:
