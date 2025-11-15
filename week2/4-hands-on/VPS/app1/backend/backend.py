@@ -40,6 +40,10 @@ model = load()
 def api_info():
     return {"info": "Welcome carapuce"}
 
+@app.get("/health")
+def api_health():
+    return {"status": "healthy"}
+
 # ------------------------------------------------------- 
 # Second route
 # ------------------------------------------------------- 
