@@ -28,6 +28,36 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
+# st.markdown(
+#     """
+#     <style>
+#     /* Full app background */
+#     .stApp {
+#         background-color: #fff9c4;  /* Light Yellow */
+#     }
+
+#     /* Main content container */
+#     .main {
+#         background-color: #fff9c4; /* Same Yellow for consistency */
+#         padding: 2rem;
+#         border-radius: 1rem;
+#     }
+
+#     /* Sidebar background */
+#     .sidebar .sidebar-content {
+#         background-color: #fffbdd;
+#         border-right: 2px solid #f0e68c;
+#     }
+
+#     /* Customize headers */
+#     h1, h2, h3 {
+#         color: #665c00;
+#     }
+#     </style>
+#     """,
+#     unsafe_allow_html=True,
+# )
+
 
 upload = st.file_uploader("Upload an image of a cat or dog", type=['png', 'jpg', 'jpeg'])
 
