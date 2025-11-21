@@ -7,7 +7,7 @@ import pandas as pd
 st.set_page_config(layout="wide")
 
 # URL de votre API FastAPI (assurez-vous qu'elle tourne sur le port 8000)
-FASTAPI_URL = "http://127.0.0.1:8001/predict_churn"
+FASTAPI_URL = "https://mlops-dah-1.onrender.com/predict_churn"
 
 st.title("💡 Allo Telecom S.A : Outil de Prédiction d'Attrition Client (Churn)")
 st.markdown("---")
