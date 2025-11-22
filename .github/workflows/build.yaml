@@ -40,7 +40,7 @@ jobs:
         if: contains(github.event.head_commit.message, 'deploy-api')
         uses: docker/build-push-action@v4
         with:
-          context: week2/2-labs/02-Action-In-Action/backend
+          context: week2/3-project/backend
           push: true
           platforms: linux/arm64 #linux/arm64 
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/catdog-api:arm64
@@ -50,7 +50,7 @@ jobs:
         if: contains(github.event.head_commit.message, 'deploy-front')
         uses: docker/build-push-action@v4
         with:
-          context: week2/2-labs/02-Action-In-Action/frontend
+          context: week2/3-project/frontend
           push: true
           platforms: linux/arm64 #linux/arm64 
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/catdog-frontend:arm64
