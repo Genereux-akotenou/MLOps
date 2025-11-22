@@ -10,5 +10,5 @@ COPY requirements.txt .
 RUN pip install --default-timeout=200 -r requirements.txt
 COPY . .
 
-EXPOSE 8000
-CMD ["uvicorn", "api:app", "--host", "0.0.0.0", "--port", "8000"]
+EXPOSE 8001
+CMD ["uvicorn", "api:app", "--host", "0.0.0.0", "--port", "8001"]
