@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  backend1:
+    container_name: backend1
+    # image: 13365920/catdog-api:arm64
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "7001:8000"
+    networks:
+      - tortank-shared-network
+
+  frontend1:
+    container_name: frontend1
+    # image: 13365920/catdog-frontend:arm64
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3001:8080"
+    networks:
+      - tortank-shared-network
+    depends_on:
+      - backend1
+
+networks:
+  tortank-shared-network:
+    external: true

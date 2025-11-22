@@ -1,0 +1,15 @@
+# start command 
+command: >
+    sh -c "ollama serve & sleep 5 && ollama run llama3"
+
+Create a small script called start.sh:
+#!/bin/sh
+ollama serve &
+sleep 5
+ollama run llama3
+
+Make it executable:
+chmod +x start.sh
+
+Then
+entrypoint: ["/bin/sh", "/start.sh"]
